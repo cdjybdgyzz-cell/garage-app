@@ -204,7 +204,10 @@
           }
           // Rename account
           parsed.forEach(a => {
-            if (a.name === 'default') a.name = 'Lee🛠️';
+            if (a.name === 'default') {
+              a.name = 'Lee🛠️';
+              a.admin = true;
+            }
           });
           localStorage.setItem('garage_accounts', JSON.stringify(parsed));
           localStorage.setItem('garage_current_account', 'Lee🛠️');
@@ -212,7 +215,7 @@
       }
     })();
     
-    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '[{"name":"Lee🛠️","pin":""}]');
+    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '[{"name":"Lee🛠️","pin":"","admin":true}]');
     let currentAccount = localStorage.getItem('garage_current_account') || 'Lee🛠️';
     let accountPin = '';
 
@@ -220,7 +223,7 @@
       const list = document.getElementById('accountList');
       list.innerHTML = accounts.map(acc => `
         <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px">
-          ${acc.name} ${acc.pin ? '🔒' : ''}
+          ${acc.name} ${acc.pin ? '🔒' : ''} ${acc.admin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:5px">Admin</span>' : ''}
         </button>
       `).join('');
       document.getElementById('startPage').style.display = 'block';
@@ -248,8 +251,10 @@
 
     function updateAccountBar() {
       const bar = document.querySelector('.account-bar');
+      const isAdmin = accounts.find(a => a.name === currentAccount && a.admin);
       bar.innerHTML = `
         <span>👤 ${currentAccount}</span>
+        ${isAdmin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:auto">Admin</span>' : '<span style="margin-left:auto"></span>'}
         ${currentAccount === 'Lee🛠️' ? '<button onclick="showAddAccount()" style="padding:8px 12px">+ Neu</button>' : ''}
         <button onclick="changePin()" style="padding:8px 12px">🔒 PIN</button>
         <button onclick="logout()" style="padding:8px 12px">🚪 Logout</button>
