@@ -156,6 +156,7 @@
     
       <div class="account-bar">
         <span>👤 ${currentAccount}</span>
+        ${currentAccount === 'Lee🛠️' ? '<button onclick="showAddAccount()" style="padding:8px 12px">+ Neu</button>' : ''}
         <button onclick="changePin()" style="padding:8px 12px">🔒 PIN</button>
         <button onclick="logout()" style="padding:8px 12px">🚪 Logout</button>
       </div>
@@ -221,7 +222,7 @@
         <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px">
           ${acc.name} ${acc.pin ? '🔒' : ''}
         </button>
-      `).join('') + `<button class="btn btn-primary" onclick="showAddAccount()" style="padding:15px; font-size:1rem; min-width:150px">+ Neu</button>`;
+      `).join('');
       document.getElementById('startPage').style.display = 'block';
       document.getElementById('mainApp').style.display = 'none';
     }
@@ -241,8 +242,18 @@
       vehicles = loadVehicles();
       document.getElementById('startPage').style.display = 'none';
       document.getElementById('mainApp').style.display = 'block';
-      updateAccountSelect();
+      updateAccountBar();
       renderVehicles();
+    }
+
+    function updateAccountBar() {
+      const bar = document.querySelector('.account-bar');
+      bar.innerHTML = `
+        <span>👤 ${currentAccount}</span>
+        ${currentAccount === 'Lee🛠️' ? '<button onclick="showAddAccount()" style="padding:8px 12px">+ Neu</button>' : ''}
+        <button onclick="changePin()" style="padding:8px 12px">🔒 PIN</button>
+        <button onclick="logout()" style="padding:8px 12px">🚪 Logout</button>
+      `;
     }
 
     function showAddAccount() {
@@ -594,6 +605,10 @@
       document.getElementById('startPage').style.display = 'block';
       document.getElementById('mainApp').style.display = 'none';
       showStartPage();
+    }
+
+    function updateAccountSelect() {
+      // Not needed anymore - using start page
     }
 
     function logout() {
