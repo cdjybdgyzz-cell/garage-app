@@ -555,10 +555,10 @@
       });
       const alertDiv = document.getElementById('serviceAlert');
       const list = document.getElementById('serviceList');
-      if (due.length > 0) {
-        list.innerHTML = due.map(v => `<div style="margin:5px 0">${v.brand} (${v.plate || 'kein Kennzeichen'}) - Service: ${v.service}</div>`).join('');
-        alertDiv.style.display = 'block';
-      } else {
+       if (due.length > 0) {
+         list.innerHTML = due.map(v => `<div style="margin:5px 0">${v.brand} (${v.plate || 'kein Kennzeichen'} - VIN: ${v.vin || 'N/A'}) - Service: ${v.service}</div>`).join('');
+         alertDiv.style.display = 'block';
+       } else {
         alertDiv.style.display = 'none';
       }
     }
