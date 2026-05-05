@@ -226,8 +226,12 @@
     function showStartPage() {
       const list = document.getElementById('accountList');
       list.innerHTML = accounts.map(acc => `
-        <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px">
-          ${acc.name} ${acc.pin ? '🔒' : '🔓'} ${acc.admin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:5px">Admin</span>' : ''}
+        <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px; display:flex; align-items:center; gap:10px">
+          ${acc.profilePic ? `<img src="${acc.profilePic}" style="width:40px; height:40px; border-radius:50%; object-fit:cover">` : '<div style="width:40px; height:40px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center">👤</div>'}
+          <div style="text-align:left">
+            <div>${acc.name} ${acc.pin ? '🔒' : '🔓'}</div>
+            ${acc.admin ? '<div style="color:var(--red); font-size:0.8rem">Admin</div>' : ''}
+          </div>
         </button>
       `).join('');
       document.getElementById('startPage').style.display = 'block';
@@ -255,11 +259,14 @@
 
     function updateAccountBar() {
       const bar = document.querySelector('.account-bar');
-      const isAdmin = accounts.find(a => a.name === currentAccount && a.admin);
+      const acc = accounts.find(a => a.name === currentAccount);
+      const isAdmin = acc && acc.admin;
+      const profilePic = acc && acc.profilePic ? `<img src="${acc.profilePic}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; margin-right:5px">` : '👤 ';
       bar.innerHTML = `
-        <span>👤 ${currentAccount}</span>
+        <span>${profilePic}${currentAccount}</span>
         ${isAdmin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:auto">Admin</span>' : '<span style="margin-left:auto"></span>'}
         ${isAdmin ? '<button onclick="showAddAccount()" style="padding:8px 12px">+ Neu</button>' : ''}
+        <button onclick="changeProfilePic()" style="padding:8px 12px">🖼️ Bild</button>
         <button onclick="changePin()" style="padding:8px 12px">🔒 PIN</button>
         <button onclick="logout()" style="padding:8px 12px">🚪 Logout</button>
       `;
@@ -277,9 +284,29 @@
         return;
       }
       const pin = prompt('PIN festlegen (leer lassen für keinen Schutz):');
-      accounts.push({name: name, pin: pin || ''});
-      saveAccounts();
-      showStartPage();
+      
+      // Profile picture upload
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            const profilePic = ev.target.result;
+            accounts.push({name: name, pin: pin || '', profilePic: profilePic});
+            saveAccounts();
+            showStartPage();
+          };
+          reader.readAsDataURL(file);
+        } else {
+          accounts.push({name: name, pin: pin || '', profilePic: ''});
+          saveAccounts();
+          showStartPage();
+        }
+      };
+      input.click();
     }
     
     function getStorageKey() {
@@ -652,6 +679,29 @@
       updateAccountBar();
       showStartPage();
       alert('PIN geändert!');
+    }
+
+    function changeProfilePic() {
+      const acc = findAccount(currentAccount);
+      if (!acc) return;
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            acc.profilePic = ev.target.result;
+            saveAccounts();
+            updateAccountBar();
+            showStartPage();
+            alert('Profilbild geändert!');
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
     }
       const newPin = prompt('Neuer PIN (leer für keinen Schutz):');
       acc.pin = newPin || '';
