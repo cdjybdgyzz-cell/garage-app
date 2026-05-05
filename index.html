@@ -259,15 +259,15 @@
       bar.innerHTML = `
         <span>👤 ${currentAccount}</span>
         ${isAdmin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:auto">Admin</span>' : '<span style="margin-left:auto"></span>'}
-        ${currentAccount === 'Lee🛠️' ? '<button onclick="showAddAccount()" style="padding:8px 12px">+ Neu</button>' : ''}
+        ${isAdmin ? '<button onclick="showAddAccount()" style="padding:8px 12px">+ Neu</button>' : ''}
         <button onclick="changePin()" style="padding:8px 12px">🔒 PIN</button>
         <button onclick="logout()" style="padding:8px 12px">🚪 Logout</button>
       `;
     }
 
     function showAddAccount() {
-      if (!accounts.find(a => a.name === 'Lee🛠️')) {
-        alert('Nur Lee kann neue Accounts erstellen!');
+      if (currentAccount !== 'Lee🛠️') {
+        alert('Nur Admin (Lee🛠️) kann neue Accounts erstellen!');
         return;
       }
       const name = prompt('Name für neuen Account:');
