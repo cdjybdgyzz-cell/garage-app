@@ -150,7 +150,8 @@
         <select id="accountSelect" onchange="switchAccount()">
           <option value="default">Hauptaccount</option>
         </select>
-        <button onclick="addAccount()">+ Neuer Account</button>
+        <button onclick="addAccount()">+ Neu</button>
+        <button onclick="changePin()">🔒 PIN</button>
       </div>
 
       <div class="data-btns">
@@ -182,8 +183,9 @@
   </div>
 
   <script>
-    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '["default"]');
+    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '[{"name":"default","pin":""}]');
     let currentAccount = localStorage.getItem('garage_current_account') || 'default';
+    let accountPin = '';
     
     function getStorageKey() {
       return 'garage_vehicles_' + currentAccount;
@@ -195,6 +197,19 @@
     
     function saveVehicles(vehicles) {
       localStorage.setItem(getStorageKey(), JSON.stringify(vehicles));
+    }
+    
+    function saveAccounts() {
+      localStorage.setItem('garage_accounts', JSON.stringify(accounts));
+    }
+    
+    function findAccount(name) {
+      return accounts.find(a => a.name === name);
+    }
+    
+    function verifyPin(pin) {
+      const acc = findAccount(currentAccount);
+      return acc && acc.pin === pin;
     }
     
     let vehicles = loadVehicles();
@@ -500,10 +515,58 @@
     }
 
     function switchAccount() {
-      currentAccount = document.getElementById('accountSelect').value;
+      const newAccount = document.getElementById('accountSelect').value;
+      const acc = findAccount(newAccount);
+      if (acc && acc.pin && acc.pin !== '') {
+        const pin = prompt('PIN für Account "' + newAccount + '":');
+        if (pin !== acc.pin) {
+          alert('Falscher PIN!');
+          document.getElementById('accountSelect').value = currentAccount;
+          return;
+        }
+      }
+      currentAccount = newAccount;
       localStorage.setItem('garage_current_account', currentAccount);
       vehicles = loadVehicles();
       renderVehicles();
+    }
+
+    function addAccount() {
+      const name = prompt('Name für neuen Account:');
+      if (!name) return;
+      if (accounts.find(a => a.name === name)) {
+        alert('Account existiert bereits!');
+        return;
+      }
+      const pin = prompt('PIN festlegen (leer lassen für keinen Schutz):');
+      accounts.push({name: name, pin: pin || ''});
+      saveAccounts();
+      const select = document.getElementById('accountSelect');
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name + (pin ? ' 🔒' : '');
+      select.appendChild(option);
+      select.value = name;
+      currentAccount = name;
+      localStorage.setItem('garage_current_account', currentAccount);
+      vehicles = [];
+      saveVehicles(vehicles);
+      renderVehicles();
+    }
+
+    function changePin() {
+      const acc = findAccount(currentAccount);
+      if (!acc) return;
+      const oldPin = prompt('Aktueller PIN:');
+      if (acc.pin && acc.pin !== oldPin) {
+        alert('Falscher PIN!');
+        return;
+      }
+      const newPin = prompt('Neuer PIN (leer für keinen Schutz):');
+      acc.pin = newPin || '';
+      saveAccounts();
+      updateAccountSelect();
+      alert('PIN geändert!');
     }
 
     function addAccount() {
@@ -529,8 +592,8 @@
       select.innerHTML = '';
       accounts.forEach(acc => {
         const option = document.createElement('option');
-        option.value = acc;
-        option.textContent = acc;
+        option.value = acc.name;
+        option.textContent = acc.name + (acc.pin ? ' 🔒' : '');
         select.appendChild(option);
       });
       select.value = currentAccount;
@@ -572,6 +635,19 @@
     }
 
     updateAccountSelect();
+    
+    // Check if current account needs PIN
+    (function() {
+      const acc = findAccount(currentAccount);
+      if (acc && acc.pin && acc.pin !== '') {
+        const pin = prompt('PIN für Account "' + currentAccount + '":');
+        if (pin !== acc.pin) {
+          alert('Falscher PIN! Bitte laden Sie die Seite neu.');
+          vehicles = [];
+        }
+      }
+    })();
+    
     renderVehicles();
   </script>
 </body>
