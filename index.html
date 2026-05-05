@@ -148,7 +148,7 @@
       <div class="account-bar">
         <span>👤</span>
         <select id="accountSelect" onchange="switchAccount()">
-          <option value="default">Hauptaccount</option>
+          <option value="Lee🛠️">Lee🛠️</option>
         </select>
         <button onclick="addAccount()">+ Neu</button>
         <button onclick="changePin()">🔒 PIN</button>
@@ -183,8 +183,30 @@
   </div>
 
   <script>
-    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '[{"name":"default","pin":""}]');
-    let currentAccount = localStorage.getItem('garage_current_account') || 'default';
+    // Migrate old "default" account to "Lee🛠️"
+    (function migrate() {
+      const oldAccounts = localStorage.getItem('garage_accounts');
+      if (oldAccounts) {
+        const parsed = JSON.parse(oldAccounts);
+        if (parsed.some(a => a.name === 'default')) {
+          // Migrate data from old key
+          const oldData = localStorage.getItem('garage_vehicles_default');
+          if (oldData) {
+            localStorage.setItem('garage_vehicles_Lee🛠️', oldData);
+            localStorage.removeItem('garage_vehicles_default');
+          }
+          // Rename account
+          parsed.forEach(a => {
+            if (a.name === 'default') a.name = 'Lee🛠️';
+          });
+          localStorage.setItem('garage_accounts', JSON.stringify(parsed));
+          localStorage.setItem('garage_current_account', 'Lee🛠️');
+        }
+      }
+    })();
+    
+    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '[{"name":"Lee🛠️","pin":""}]');
+    let currentAccount = localStorage.getItem('garage_current_account') || 'Lee🛠️';
     let accountPin = '';
     
     function getStorageKey() {
