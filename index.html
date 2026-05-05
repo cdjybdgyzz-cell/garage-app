@@ -223,7 +223,7 @@
       const list = document.getElementById('accountList');
       list.innerHTML = accounts.map(acc => `
         <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px">
-          ${acc.name} ${acc.pin ? '🔒' : ''} ${acc.admin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:5px">Admin</span>' : ''}
+          ${acc.name} ${acc.pin ? '🔒' : '🔓'} ${acc.admin ? '<span style="color:var(--red); font-size:0.8rem; margin-left:5px">Admin</span>' : ''}
         </button>
       `).join('');
       document.getElementById('startPage').style.display = 'block';
@@ -625,11 +625,22 @@
     function changePin() {
       const acc = findAccount(currentAccount);
       if (!acc) return;
-      const oldPin = prompt('Aktueller PIN:');
-      if (acc.pin && acc.pin !== oldPin) {
-        alert('Falscher PIN!');
-        return;
+      if (acc.pin && acc.pin !== '') {
+        const oldPin = prompt('Aktueller PIN:');
+        if (acc.pin !== oldPin) {
+          alert('Falscher PIN!');
+          return;
+        }
+      } else {
+        alert('Dieser Account hat noch keinen PIN. Bitte neuen PIN festlegen:');
       }
+      const newPin = prompt('Neuer PIN (leer lassen für keinen Schutz):');
+      acc.pin = newPin || '';
+      saveAccounts();
+      updateAccountBar();
+      showStartPage();
+      alert('PIN geändert!');
+    }
       const newPin = prompt('Neuer PIN (leer für keinen Schutz):');
       acc.pin = newPin || '';
       saveAccounts();
