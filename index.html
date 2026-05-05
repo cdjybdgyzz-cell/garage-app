@@ -79,10 +79,19 @@
     .part-form input::placeholder { color: #888; }
     .part-form button { padding: 10px 20px; background: var(--red); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
 
-    .parts-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-    .parts-tab { flex: 1; padding: 10px; border: 2px solid var(--white); border-radius: 8px; font-size: 0.8rem; cursor: pointer; background: transparent; color: var(--white); }
-    .parts-tab.active { background: var(--red); border-color: var(--red); }
-  </style>
+     .parts-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+     .parts-tab { flex: 1; padding: 10px; border: 2px solid var(--white); border-radius: 8px; font-size: 0.8rem; cursor: pointer; background: transparent; color: var(--white); }
+     .parts-tab.active { background: var(--red); border-color: var(--red); }
+
+     .data-btns { display: flex; gap: 10px; margin-bottom: 20px; }
+     .btn-small { flex: 1; padding: 8px; font-size: 0.8rem; border-radius: 8px; cursor: pointer; border: 2px solid var(--white); background: transparent; color: var(--white); }
+     .btn-small:hover { background: var(--red); border-color: var(--red); }
+
+     .account-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background: #111; border: 2px solid var(--white); border-radius: 10px; }
+     .account-bar span { color: var(--white); font-size: 0.9rem; }
+     .account-bar select { flex: 1; padding: 8px; border: 2px solid var(--white); border-radius: 8px; background: var(--black); color: var(--white); font-size: 0.9rem; }
+     .account-bar button { padding: 8px 12px; border: 2px solid var(--red); border-radius: 8px; background: var(--red); color: var(--white); cursor: pointer; font-size: 0.8rem; }
+   </style>
 </head>
 <body>
   <div class="container">
@@ -136,11 +145,19 @@
       <button class="btn btn-secondary" onclick="toggleForm()">Abbrechen</button>
     </div>
     
-     <div class="modal-actions" style="margin-bottom:20px">
-       <button class="btn btn-secondary" onclick="exportData()" style="flex:1">📥 Daten exportieren</button>
-       <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" style="flex:1">📤 Daten importieren</button>
-       <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none">
-     </div>
+      <div class="account-bar">
+        <span>👤</span>
+        <select id="accountSelect" onchange="switchAccount()">
+          <option value="default">Hauptaccount</option>
+        </select>
+        <button onclick="addAccount()">+ Neuer Account</button>
+      </div>
+
+      <div class="data-btns">
+        <button class="btn-small" onclick="exportData()">📥 Export</button>
+        <button class="btn-small" onclick="document.getElementById('importFile').click()">📤 Import</button>
+        <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none">
+      </div>
 
      <div id="serviceAlert" style="display:none; background:#111; border:2px solid #cc0000; border-radius:15px; padding:20px; margin-bottom:20px; color:white">
        <h3 style="color:#cc0000; margin-bottom:10px">⚠️ Service fällig!</h3>
@@ -165,7 +182,22 @@
   </div>
 
   <script>
-    let vehicles = JSON.parse(localStorage.getItem('garage_vehicles') || '[]');
+    let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '["default"]');
+    let currentAccount = localStorage.getItem('garage_current_account') || 'default';
+    
+    function getStorageKey() {
+      return 'garage_vehicles_' + currentAccount;
+    }
+    
+    function loadVehicles() {
+      return JSON.parse(localStorage.getItem(getStorageKey()) || '[]');
+    }
+    
+    function saveVehicles(vehicles) {
+      localStorage.setItem(getStorageKey(), JSON.stringify(vehicles));
+    }
+    
+    let vehicles = loadVehicles();
     let currentType = 'car';
     let editingId = null;
 
@@ -214,7 +246,7 @@
       }
       
       vehicles.push(vehicle);
-      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      saveVehicles(vehicles);
       renderVehicles();
       clearForm();
     }
@@ -223,7 +255,7 @@
       e.stopPropagation();
       if (confirm('Fahrzeug löschen?')) {
         vehicles = vehicles.filter(v => v.id !== id);
-        localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+        saveVehicles(vehicles);
         renderVehicles();
       }
     }
@@ -351,7 +383,7 @@
       if (idx === -1) return;
       if (!vehicles[idx].parts) vehicles[idx].parts = [];
       vehicles[idx].parts.push({ name: name, qty: parseInt(qty) || 1, category: currentPartsCategory });
-      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      saveVehicles(vehicles);
       document.getElementById('newPartName').value = '';
       document.getElementById('newPartQty').value = '';
       renderParts(vehicles[idx]);
@@ -364,7 +396,7 @@
       const actualPart = parts[partIdx];
       if (!actualPart) return;
       vehicles[idx].parts = (vehicles[idx].parts || []).filter(p => !(p.name === actualPart.name && p.qty === actualPart.qty && p.category === currentPartsCategory));
-      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      saveVehicles(vehicles);
       renderParts(vehicles[idx]);
     }
 
@@ -389,7 +421,7 @@
         service: document.getElementById('detailService').value,
         price: document.getElementById('detailPrice').value
       };
-      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      saveVehicles(vehicles);
       renderVehicles();
       closeModal();
     }
@@ -467,13 +499,50 @@
       `}).join('');
     }
 
+    function switchAccount() {
+      currentAccount = document.getElementById('accountSelect').value;
+      localStorage.setItem('garage_current_account', currentAccount);
+      vehicles = loadVehicles();
+      renderVehicles();
+    }
+
+    function addAccount() {
+      const name = prompt('Name für neuen Account:');
+      if (!name) return;
+      if (accounts.includes(name)) {
+        alert('Account existiert bereits!');
+        return;
+      }
+      accounts.push(name);
+      localStorage.setItem('garage_accounts', JSON.stringify(accounts));
+      const select = document.getElementById('accountSelect');
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
+      select.value = name;
+      switchAccount();
+    }
+
+    function updateAccountSelect() {
+      const select = document.getElementById('accountSelect');
+      select.innerHTML = '';
+      accounts.forEach(acc => {
+        const option = document.createElement('option');
+        option.value = acc;
+        option.textContent = acc;
+        select.appendChild(option);
+      });
+      select.value = currentAccount;
+    }
+
     function exportData() {
       const dataStr = JSON.stringify(vehicles, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'garage_export_' + new Date().toISOString().slice(0,10) + '.json';
+      a.download = 'garage_' + currentAccount + '_' + new Date().toISOString().slice(0,10) + '.json';
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -491,9 +560,9 @@
           } else {
             vehicles = vehicles.concat(imported);
           }
-          localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+          saveVehicles(vehicles);
           renderVehicles();
-          alert('Import erfolgreich!');
+          alert('Import erfolgreich in Account: ' + currentAccount);
         } catch(err) {
           alert('Fehler beim Import: ' + err.message);
         }
@@ -502,6 +571,7 @@
       event.target.value = '';
     }
 
+    updateAccountSelect();
     renderVehicles();
   </script>
 </body>
