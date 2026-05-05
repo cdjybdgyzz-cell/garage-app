@@ -217,12 +217,11 @@
 
     function showStartPage() {
       const list = document.getElementById('accountList');
-      const isLee = currentAccount === 'Lee🛠️';
       list.innerHTML = accounts.map(acc => `
         <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px">
           ${acc.name} ${acc.pin ? '🔒' : ''}
         </button>
-      `).join('') + (isLee ? `<button class="btn btn-primary" onclick="showAddAccount()" style="padding:15px; font-size:1rem; min-width:150px">+ Neu</button>` : '');
+      `).join('') + `<button class="btn btn-primary" onclick="showAddAccount()" style="padding:15px; font-size:1rem; min-width:150px">+ Neu</button>`;
       document.getElementById('startPage').style.display = 'block';
       document.getElementById('mainApp').style.display = 'none';
     }
@@ -247,7 +246,7 @@
     }
 
     function showAddAccount() {
-      if (currentAccount !== 'Lee🛠️') {
+      if (!accounts.find(a => a.name === 'Lee🛠️')) {
         alert('Nur Lee kann neue Accounts erstellen!');
         return;
       }
