@@ -99,8 +99,7 @@
     <h1>🔧 <span>Garage</span></h1>
     <div style="background:#111; border:2px solid var(--white); border-radius:15px; padding:30px; margin-top:50px; text-align:center">
       <h2 style="color:var(--white); margin-bottom:20px">Account wählen</h2>
-      <div id="accountList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px"></div>
-      <button class="btn btn-primary" onclick="showAddAccount()" style="margin-top:10px">+ Neuer Account</button>
+      <div id="accountList" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:20px"></div>
     </div>
   </div>
 
@@ -218,11 +217,12 @@
 
     function showStartPage() {
       const list = document.getElementById('accountList');
+      const isLee = currentAccount === 'Lee🛠️';
       list.innerHTML = accounts.map(acc => `
-        <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="text-align:left; padding:15px; font-size:1rem">
+        <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="padding:15px; font-size:1rem; min-width:150px">
           ${acc.name} ${acc.pin ? '🔒' : ''}
         </button>
-      `).join('');
+      `).join('') + (isLee ? `<button class="btn btn-primary" onclick="showAddAccount()" style="padding:15px; font-size:1rem; min-width:150px">+ Neu</button>` : '');
       document.getElementById('startPage').style.display = 'block';
       document.getElementById('mainApp').style.display = 'none';
     }
@@ -247,6 +247,10 @@
     }
 
     function showAddAccount() {
+      if (currentAccount !== 'Lee🛠️') {
+        alert('Nur Lee kann neue Accounts erstellen!');
+        return;
+      }
       const name = prompt('Name für neuen Account:');
       if (!name) return;
       if (accounts.find(a => a.name === name)) {
@@ -596,8 +600,6 @@
     function logout() {
       document.getElementById('startPage').style.display = 'block';
       document.getElementById('mainApp').style.display = 'none';
-      currentAccount = null;
-      vehicles = [];
       showStartPage();
     }
 
