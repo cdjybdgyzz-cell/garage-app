@@ -131,6 +131,10 @@
         <input type="text" id="plate" placeholder="z.B. AG 123456">
       </div>
       <div class="form-group">
+        <label>VIN (Fahrzeugidentifikationsnummer)</label>
+        <input type="text" id="vin" placeholder="z.B. WBA12345678901234">
+      </div>
+      <div class="form-group">
         <label>Baujahr</label>
         <input type="number" id="year" placeholder="z.B. 2020" min="1900" max="2026">
       </div>
@@ -325,6 +329,7 @@
     function clearForm() {
       document.getElementById('brand').value = '';
       document.getElementById('plate').value = '';
+      document.getElementById('vin').value = '';
       document.getElementById('year').value = '';
       document.getElementById('color').value = '';
       document.getElementById('displacement').value = '';
@@ -338,6 +343,7 @@
         type: currentType,
         brand: document.getElementById('brand').value,
         plate: document.getElementById('plate').value.toUpperCase(),
+        vin: document.getElementById('vin').value.toUpperCase(),
         year: document.getElementById('year').value,
         color: document.getElementById('color').value,
         displacement: document.getElementById('displacement').value,
@@ -393,6 +399,10 @@
           <div class="form-group">
             <label>Kennzeichen</label>
             <input type="text" id="detailPlate" value="${v.plate || ''}">
+          </div>
+          <div class="form-group">
+            <label>VIN (Fahrzeugidentifikationsnummer)</label>
+            <input type="text" id="detailVin" value="${v.vin || ''}">
           </div>
           <div class="form-group">
             <label>Baujahr</label>
@@ -518,6 +528,7 @@
         ...vehicles[idx],
         brand: document.getElementById('detailBrand').value,
         plate: document.getElementById('detailPlate').value.toUpperCase(),
+        vin: document.getElementById('detailVin').value.toUpperCase(),
         year: document.getElementById('detailYear').value,
         color: document.getElementById('detailColor').value,
         displacement: document.getElementById('detailDisplacement').value,
@@ -591,6 +602,7 @@
           <h3>${v.brand}</h3>
           <div class="vehicle-info">
             <div>Kennzeichen: <span>${v.plate || '-'}</span></div>
+            <div>VIN: <span>${v.vin || '-'}</span></div>
             <div>Baujahr: <span>${v.year || '-'}</span></div>
             <div>Farbe: <span>${v.color || '-'}</span></div>
             <div>Km-Stand: <span>${v.km ? v.km.toLocaleString() + ' km' : '-'}</span></div>
