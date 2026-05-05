@@ -94,8 +94,18 @@
    </style>
 </head>
 <body>
-  <div class="container">
+  <!-- Startseite -->
+  <div class="container" id="startPage">
     <h1>🔧 <span>Garage</span></h1>
+    <div style="background:#111; border:2px solid var(--white); border-radius:15px; padding:30px; margin-top:50px; text-align:center">
+      <h2 style="color:var(--white); margin-bottom:20px">Account wählen</h2>
+      <div id="accountList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px"></div>
+      <button class="btn btn-primary" onclick="showAddAccount()" style="margin-top:10px">+ Neuer Account</button>
+    </div>
+  </div>
+
+  <!-- Hauptmenu (versteckt) -->
+  <div class="container" id="mainApp" style="display:none">
     
     <div class="stats">
       <div class="stat-box"><span id="totalCars">0</span><small>Autos</small></div>
@@ -146,12 +156,9 @@
     </div>
     
       <div class="account-bar">
-        <span>👤</span>
-        <select id="accountSelect" onchange="switchAccount()">
-          <option value="Lee🛠️">Lee🛠️</option>
-        </select>
-        <button onclick="addAccount()">+ Neu</button>
-        <button onclick="changePin()">🔒 PIN</button>
+        <span>👤 ${currentAccount}</span>
+        <button onclick="changePin()" style="padding:8px 12px">🔒 PIN</button>
+        <button onclick="logout()" style="padding:8px 12px">🚪 Logout</button>
       </div>
 
       <div class="data-btns">
@@ -208,6 +215,49 @@
     let accounts = JSON.parse(localStorage.getItem('garage_accounts') || '[{"name":"Lee🛠️","pin":""}]');
     let currentAccount = localStorage.getItem('garage_current_account') || 'Lee🛠️';
     let accountPin = '';
+
+    function showStartPage() {
+      const list = document.getElementById('accountList');
+      list.innerHTML = accounts.map(acc => `
+        <button class="btn btn-secondary" onclick="selectAccount('${acc.name}')" style="text-align:left; padding:15px; font-size:1rem">
+          ${acc.name} ${acc.pin ? '🔒' : ''}
+        </button>
+      `).join('');
+      document.getElementById('startPage').style.display = 'block';
+      document.getElementById('mainApp').style.display = 'none';
+    }
+
+    function selectAccount(name) {
+      const acc = findAccount(name);
+      if (!acc) return;
+      if (acc.pin && acc.pin !== '') {
+        const pin = prompt('PIN für Account "' + name + '":');
+        if (pin !== acc.pin) {
+          alert('Falscher PIN!');
+          return;
+        }
+      }
+      currentAccount = name;
+      localStorage.setItem('garage_current_account', currentAccount);
+      vehicles = loadVehicles();
+      document.getElementById('startPage').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      updateAccountSelect();
+      renderVehicles();
+    }
+
+    function showAddAccount() {
+      const name = prompt('Name für neuen Account:');
+      if (!name) return;
+      if (accounts.find(a => a.name === name)) {
+        alert('Account existiert bereits!');
+        return;
+      }
+      const pin = prompt('PIN festlegen (leer lassen für keinen Schutz):');
+      accounts.push({name: name, pin: pin || ''});
+      saveAccounts();
+      showStartPage();
+    }
     
     function getStorageKey() {
       return 'garage_vehicles_' + currentAccount;
@@ -537,43 +587,18 @@
     }
 
     function switchAccount() {
-      const newAccount = document.getElementById('accountSelect').value;
-      const acc = findAccount(newAccount);
-      if (acc && acc.pin && acc.pin !== '') {
-        const pin = prompt('PIN für Account "' + newAccount + '":');
-        if (pin !== acc.pin) {
-          alert('Falscher PIN!');
-          document.getElementById('accountSelect').value = currentAccount;
-          return;
-        }
-      }
-      currentAccount = newAccount;
-      localStorage.setItem('garage_current_account', currentAccount);
-      vehicles = loadVehicles();
-      renderVehicles();
+      // Redirect to start page
+      document.getElementById('startPage').style.display = 'block';
+      document.getElementById('mainApp').style.display = 'none';
+      showStartPage();
     }
 
-    function addAccount() {
-      const name = prompt('Name für neuen Account:');
-      if (!name) return;
-      if (accounts.find(a => a.name === name)) {
-        alert('Account existiert bereits!');
-        return;
-      }
-      const pin = prompt('PIN festlegen (leer lassen für keinen Schutz):');
-      accounts.push({name: name, pin: pin || ''});
-      saveAccounts();
-      const select = document.getElementById('accountSelect');
-      const option = document.createElement('option');
-      option.value = name;
-      option.textContent = name + (pin ? ' 🔒' : '');
-      select.appendChild(option);
-      select.value = name;
-      currentAccount = name;
-      localStorage.setItem('garage_current_account', currentAccount);
+    function logout() {
+      document.getElementById('startPage').style.display = 'block';
+      document.getElementById('mainApp').style.display = 'none';
+      currentAccount = null;
       vehicles = [];
-      saveVehicles(vehicles);
-      renderVehicles();
+      showStartPage();
     }
 
     function changePin() {
@@ -656,21 +681,8 @@
       event.target.value = '';
     }
 
-    updateAccountSelect();
-    
-    // Check if current account needs PIN
-    (function() {
-      const acc = findAccount(currentAccount);
-      if (acc && acc.pin && acc.pin !== '') {
-        const pin = prompt('PIN für Account "' + currentAccount + '":');
-        if (pin !== acc.pin) {
-          alert('Falscher PIN! Bitte laden Sie die Seite neu.');
-          vehicles = [];
-        }
-      }
-    })();
-    
-    renderVehicles();
+    // Show start page first
+    showStartPage();
   </script>
 </body>
 </html>
