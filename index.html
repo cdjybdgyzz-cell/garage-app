@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garage - Autos & Töffli</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    :root { --red: #cc0000; --white: #ffffff; --black: #000000; }
+    body { background: var(--black); min-height: 100vh; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    h1 { color: var(--white); text-align: center; margin-bottom: 20px; font-size: 2rem; border-bottom: 3px solid var(--red); padding-bottom: 15px; }
+    h1 span { color: var(--red); }
+    
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 12px; border: 2px solid var(--white); border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all 0.3s; background: transparent; color: var(--white); }
+    .tab.active { background: var(--red); border-color: var(--red); }
+    
+    .form { background: #111; border: 2px solid var(--white); border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+    .form h2 { color: var(--white); margin-bottom: 15px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; color: var(--white); margin-bottom: 5px; font-size: 0.9rem; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 2px solid var(--white); border-radius: 8px; font-size: 1rem; background: var(--black); color: var(--white); }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--red); outline: none; }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: #888; }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+    .btn:hover { transform: scale(1.02); }
+    .btn-primary { background: var(--red); color: var(--white); border: 2px solid var(--red); }
+    .btn-secondary { background: transparent; color: var(--white); border: 2px solid var(--white); margin-top: 10px; }
+    
+    .vehicle-list { display: flex; flex-direction: column; gap: 15px; }
+    .vehicle-card { background: #111; border: 2px solid var(--white); border-radius: 15px; padding: 20px; position: relative; cursor: pointer; transition: border-color 0.3s; }
+    .vehicle-card:hover { border-color: var(--red); }
+    .vehicle-card .type-badge { position: absolute; top: 15px; right: 15px; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 2px solid var(--white); }
+    .vehicle-card.car .type-badge { background: var(--red); color: var(--white); border-color: var(--red); }
+    .vehicle-card.moped .type-badge, .vehicle-card.toeff .type-badge { background: var(--white); color: var(--black); border-color: var(--white); }
+    .vehicle-card h3 { color: var(--white); margin-bottom: 10px; }
+    .vehicle-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; color: #aaa; font-size: 0.9rem; }
+    .vehicle-info span { color: var(--white); }
+    .vehicle-card .delete-btn { position: absolute; bottom: 15px; right: 15px; background: transparent; color: var(--red); border: 2px solid var(--red); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+    .vehicle-card .delete-btn:hover { background: var(--red); color: var(--white); }
+    
+    .empty { text-align: center; color: #888; padding: 40px; border: 2px dashed #444; border-radius: 15px; }
+    .stats { display: flex; gap: 15px; margin-bottom: 20px; }
+    .stat-box { flex: 1; background: #111; border: 2px solid var(--white); border-radius: 12px; padding: 15px; text-align: center; color: var(--white); }
+    .stat-box span { display: block; font-size: 1.5rem; font-weight: bold; color: var(--red); }
+    .stat-box small { color: var(--white); font-size: 0.8rem; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 100; padding: 20px; overflow-y: auto; }
+    .modal-overlay.active { display: block; }
+    .modal { background: #111; border: 2px solid var(--white); border-radius: 15px; padding: 20px; max-width: 500px; margin: 0 auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--red); }
+    .modal-header h2 { color: var(--white); }
+    .modal-close { background: transparent; color: var(--white); border: 2px solid var(--white); width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; }
+    .modal-close:hover { background: var(--red); border-color: var(--red); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions .btn { flex: 1; }
+
+    .detail-info { color: var(--white); margin-bottom: 10px; }
+    .detail-info strong { color: var(--red); }
+
+    .section-title { color: var(--white); font-size: 1.2rem; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 2px solid var(--red); }
+    .parts-section { background: #111; border: 2px solid var(--white); border-radius: 15px; padding: 20px; margin-top: 20px; }
+    .parts-section h3 { color: var(--white); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .part-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #333; border-radius: 8px; margin-bottom: 10px; color: var(--white); }
+    .part-item .part-name { font-weight: 600; }
+    .part-item .part-qty { color: var(--red); font-weight: bold; }
+    .part-item .part-delete { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+    .part-item .part-delete:hover { background: var(--red); color: var(--white); }
+    .parts-empty { color: #666; text-align: center; padding: 20px; }
+    
+    .view-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .view-tab { flex: 1; padding: 12px; border: 2px solid var(--white); border-radius: 10px; font-size: 0.9rem; cursor: pointer; background: transparent; color: var(--white); }
+    .view-tab.active { background: var(--red); border-color: var(--red); }
+
+    .part-form { display: flex; gap: 10px; margin-bottom: 15px; }
+    .part-form input { flex: 1; padding: 10px; border: 2px solid var(--white); border-radius: 8px; background: var(--black); color: var(--white); }
+    .part-form input::placeholder { color: #888; }
+    .part-form button { padding: 10px 20px; background: var(--red); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+    .parts-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+    .parts-tab { flex: 1; padding: 10px; border: 2px solid var(--white); border-radius: 8px; font-size: 0.8rem; cursor: pointer; background: transparent; color: var(--white); }
+    .parts-tab.active { background: var(--red); border-color: var(--red); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 <span>Garage</span></h1>
+    
+    <div class="stats">
+      <div class="stat-box"><span id="totalCars">0</span><small>Autos</small></div>
+      <div class="stat-box"><span id="totalMopeds">0</span><small>Töffli</small></div>
+      <div class="stat-box"><span id="totalToeff">0</span><small>Töff</small></div>
+      <div class="stat-box"><span id="totalVehicles">0</span><small>Total</small></div>
+    </div>
+    
+    <button class="btn btn-primary" onclick="toggleForm()" style="margin-bottom:20px">➕ Neues Fahrzeug hinzufügen</button>
+
+    <div class="form" id="vehicleForm" style="display:none">
+      <h2 id="formTitle">Neues Auto erfassen</h2>
+      <div class="tabs" style="margin-bottom:15px">
+        <button class="tab active" onclick="showForm('car')">🚗 Auto</button>
+        <button class="tab" onclick="showForm('moped')">🏍️ Töffli</button>
+        <button class="tab" onclick="showForm('toeff')">🛵 Töff</button>
+      </div>
+      <div class="form-group">
+        <label>Marke / Modell</label>
+        <input type="text" id="brand" placeholder="z.B. BMW X5" required>
+      </div>
+      <div class="form-group">
+        <label>Kennzeichen</label>
+        <input type="text" id="plate" placeholder="z.B. AG 123456">
+      </div>
+      <div class="form-group">
+        <label>Baujahr</label>
+        <input type="number" id="year" placeholder="z.B. 2020" min="1900" max="2026">
+      </div>
+      <div class="form-group">
+        <label>Farbe</label>
+        <input type="text" id="color" placeholder="z.B. Schwarz">
+      </div>
+      <div class="form-group" id="hubraumGroup" style="display:none">
+        <label>Hubraum (ccm)</label>
+        <input type="number" id="displacement" placeholder="z.B. 125">
+      </div>
+      <div class="form-group">
+        <label>Km-Stand</label>
+        <input type="number" id="km" placeholder="z.B. 50000">
+      </div>
+      <div class="form-group">
+        <label>Notizen / Zusätzliche Infos</label>
+        <textarea id="notes" placeholder="Versicherung, Service, Tuning, etc."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveVehicle()">Speichern</button>
+      <button class="btn btn-secondary" onclick="toggleForm()">Abbrechen</button>
+    </div>
+    
+     <div class="modal-actions" style="margin-bottom:20px">
+       <button class="btn btn-secondary" onclick="exportData()" style="flex:1">📥 Daten exportieren</button>
+       <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" style="flex:1">📤 Daten importieren</button>
+       <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none">
+     </div>
+
+     <div id="serviceAlert" style="display:none; background:#111; border:2px solid #cc0000; border-radius:15px; padding:20px; margin-bottom:20px; color:white">
+       <h3 style="color:#cc0000; margin-bottom:10px">⚠️ Service fällig!</h3>
+       <div id="serviceList"></div>
+     </div>
+
+     <div class="vehicle-list" id="vehicleList"></div>
+   </div>
+
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Fahrzeug</h2>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div id="modalContent"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="saveDetail()">Änderungen speichern</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Schliessen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let vehicles = JSON.parse(localStorage.getItem('garage_vehicles') || '[]');
+    let currentType = 'car';
+    let editingId = null;
+
+    function toggleForm() {
+      const form = document.getElementById('vehicleForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      if (form.style.display === 'block') clearForm();
+    }
+
+    function showForm(type) {
+      currentType = type;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('formTitle').textContent = 'Neues ' + (type === 'car' ? 'Auto' : type === 'moped' ? 'Töffli' : 'Töff') + ' erfassen';
+      document.getElementById('hubraumGroup').style.display = (type === 'moped' || type === 'toeff') ? 'block' : 'none';
+      clearForm();
+    }
+
+    function clearForm() {
+      document.getElementById('brand').value = '';
+      document.getElementById('plate').value = '';
+      document.getElementById('year').value = '';
+      document.getElementById('color').value = '';
+      document.getElementById('displacement').value = '';
+      document.getElementById('km').value = '';
+      document.getElementById('notes').value = '';
+    }
+
+    function saveVehicle() {
+      const vehicle = {
+        id: Date.now(),
+        type: currentType,
+        brand: document.getElementById('brand').value,
+        plate: document.getElementById('plate').value.toUpperCase(),
+        year: document.getElementById('year').value,
+        color: document.getElementById('color').value,
+        displacement: document.getElementById('displacement').value,
+        km: document.getElementById('km').value,
+        notes: document.getElementById('notes').value,
+        date: new Date().toLocaleDateString('de-CH')
+      };
+      
+      if (!vehicle.brand) {
+        alert('Bitte Marke ausfüllen!');
+        return;
+      }
+      
+      vehicles.push(vehicle);
+      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      renderVehicles();
+      clearForm();
+    }
+
+    function deleteVehicle(id, e) {
+      e.stopPropagation();
+      if (confirm('Fahrzeug löschen?')) {
+        vehicles = vehicles.filter(v => v.id !== id);
+        localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+        renderVehicles();
+      }
+    }
+
+    function openDetail(id) {
+      const v = vehicles.find(x => x.id === id);
+      if (!v) return;
+      editingId = id;
+      const typeName = v.type === 'car' ? 'Auto' : v.type === 'moped' ? 'Töffli' : 'Töff';
+      const parts = v.parts || [];
+      const partsByCategory = { 'Auto': [], 'Töffli': [], 'Töff': [] };
+      parts.forEach(p => {
+        const cat = p.category || typeName;
+        if (!partsByCategory[cat]) partsByCategory[cat] = [];
+        partsByCategory[cat].push(p);
+      });
+      
+      document.getElementById('modalTitle').textContent = v.brand + ' (' + typeName + ')';
+      document.getElementById('modalContent').innerHTML = `
+        <div class="view-tabs">
+          <button class="view-tab active" onclick="switchView('info')">📋 Infos</button>
+          <button class="view-tab" onclick="switchView('parts')">🔧 Teile</button>
+        </div>
+        <div id="viewInfo">
+          <div class="form-group">
+            <label>Marke / Modell</label>
+            <input type="text" id="detailBrand" value="${v.brand || ''}">
+          </div>
+          <div class="form-group">
+            <label>Kennzeichen</label>
+            <input type="text" id="detailPlate" value="${v.plate || ''}">
+          </div>
+          <div class="form-group">
+            <label>Baujahr</label>
+            <input type="number" id="detailYear" value="${v.year || ''}">
+          </div>
+          <div class="form-group">
+            <label>Farbe</label>
+            <input type="text" id="detailColor" value="${v.color || ''}">
+          </div>
+          <div class="form-group" id="detailHubraumGroup" style="display: ${(v.type === 'moped' || v.type === 'toeff') ? 'block' : 'none'}">
+            <label>Hubraum (ccm)</label>
+            <input type="number" id="detailDisplacement" value="${v.displacement || ''}">
+          </div>
+          <div class="form-group">
+            <label>Km-Stand</label>
+            <input type="number" id="detailKm" value="${v.km || ''}">
+          </div>
+          <div class="form-group">
+            <label>Notizen / Zusätzliche Infos</label>
+            <textarea id="detailNotes">${v.notes || ''}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Versicherung</label>
+            <input type="text" id="detailInsurance" value="${v.insurance || ''}" placeholder="z.B. AXA, Helm">
+          </div>
+          <div class="form-group">
+            <label>Service Datum</label>
+            <input type="text" id="detailService" value="${v.service || ''}" placeholder="z.B. 15.03.2024">
+          </div>
+          <div class="form-group">
+            <label>Neupreis</label>
+            <input type="number" id="detailPrice" value="${v.price || ''}" placeholder="z.B. 25000">
+          </div>
+          <p class="detail-info">Erstellt: <strong>${v.date}</strong></p>
+        </div>
+        <div id="viewParts" style="display:none">
+          <div class="parts-tabs">
+            <button class="parts-tab active" onclick="showPartsCategory('car')">🚗 Auto</button>
+            <button class="parts-tab" onclick="showPartsCategory('moped')">🏍️ Töffli</button>
+            <button class="parts-tab" onclick="showPartsCategory('toeff')">🛵 Töff</button>
+          </div>
+          <div class="parts-section">
+            <h3>🔧 Teile</h3>
+            <div class="part-form">
+              <input type="text" id="newPartName" placeholder="z.B. Bremsbeläge">
+              <input type="number" id="newPartQty" placeholder="Anzahl" style="width:80px">
+              <button onclick="addPart()">+</button>
+            </div>
+            <div id="partsList"></div>
+          </div>
+        </div>
+      `;
+      renderParts(v);
+      document.getElementById('detailModal').classList.add('active');
+    }
+
+    function switchView(view) {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('viewInfo').style.display = view === 'info' ? 'block' : 'none';
+      document.getElementById('viewParts').style.display = view === 'parts' ? 'block' : 'none';
+    }
+
+    let currentPartsCategory = 'car';
+    function showPartsCategory(cat) {
+      currentPartsCategory = cat;
+      document.querySelectorAll('.parts-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      const v = vehicles.find(x => x.id === editingId);
+      if (v) renderParts(v);
+    }
+
+    function renderParts(v) {
+      const parts = (v.parts || []).filter(p => p.category === currentPartsCategory);
+      const list = document.getElementById('partsList');
+      if (parts.length === 0) {
+        list.innerHTML = '<div class="parts-empty">Noch keine Teile für diese Kategorie</div>';
+        return;
+      }
+      list.innerHTML = parts.map((p, i) => `
+        <div class="part-item">
+          <span class="part-name">${p.name}</span>
+          <span class="part-qty">x${p.qty}</span>
+          <button class="part-delete" onclick="deletePart(${i})">×</button>
+        </div>
+      `).join('');
+    }
+
+    function addPart() {
+      const name = document.getElementById('newPartName').value;
+      const qty = document.getElementById('newPartQty').value;
+      if (!name) return;
+      const idx = vehicles.findIndex(v => v.id === editingId);
+      if (idx === -1) return;
+      if (!vehicles[idx].parts) vehicles[idx].parts = [];
+      vehicles[idx].parts.push({ name: name, qty: parseInt(qty) || 1, category: currentPartsCategory });
+      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      document.getElementById('newPartName').value = '';
+      document.getElementById('newPartQty').value = '';
+      renderParts(vehicles[idx]);
+    }
+
+    function deletePart(partIdx) {
+      const idx = vehicles.findIndex(v => v.id === editingId);
+      if (idx === -1) return;
+      const parts = (vehicles[idx].parts || []).filter(p => p.category === currentPartsCategory);
+      const actualPart = parts[partIdx];
+      if (!actualPart) return;
+      vehicles[idx].parts = (vehicles[idx].parts || []).filter(p => !(p.name === actualPart.name && p.qty === actualPart.qty && p.category === currentPartsCategory));
+      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      renderParts(vehicles[idx]);
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.remove('active');
+      editingId = null;
+    }
+
+    function saveDetail() {
+      const idx = vehicles.findIndex(v => v.id === editingId);
+      if (idx === -1) return;
+      vehicles[idx] = {
+        ...vehicles[idx],
+        brand: document.getElementById('detailBrand').value,
+        plate: document.getElementById('detailPlate').value.toUpperCase(),
+        year: document.getElementById('detailYear').value,
+        color: document.getElementById('detailColor').value,
+        displacement: document.getElementById('detailDisplacement').value,
+        km: document.getElementById('detailKm').value,
+        notes: document.getElementById('detailNotes').value,
+        insurance: document.getElementById('detailInsurance').value,
+        service: document.getElementById('detailService').value,
+        price: document.getElementById('detailPrice').value
+      };
+      localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+      renderVehicles();
+      closeModal();
+    }
+
+    function checkServiceAlerts() {
+      const due = vehicles.filter(v => {
+        if (!v.service) return false;
+        const parts = v.service.split('.');
+        if (parts.length !== 3) return false;
+        const serviceDate = new Date(parts[2], parts[1]-1, parts[0]);
+        const today = new Date();
+        const diff = (serviceDate - today) / (1000*60*60*24);
+        return diff <= 30 && diff >= -365;
+      });
+      const alertDiv = document.getElementById('serviceAlert');
+      const list = document.getElementById('serviceList');
+      if (due.length > 0) {
+        list.innerHTML = due.map(v => `<div style="margin:5px 0">${v.brand} (${v.plate || 'kein Kennzeichen'}) - Service: ${v.service}</div>`).join('');
+        alertDiv.style.display = 'block';
+      } else {
+        alertDiv.style.display = 'none';
+      }
+    }
+
+    function renderVehicles() {
+      const list = document.getElementById('vehicleList');
+      const cars = vehicles.filter(v => v.type === 'car');
+      const mopeds = vehicles.filter(v => v.type === 'moped');
+      const toeff = vehicles.filter(v => v.type === 'toeff');
+      
+      document.getElementById('totalCars').textContent = cars.length;
+      document.getElementById('totalMopeds').textContent = mopeds.length;
+      document.getElementById('totalToeff').textContent = toeff.length;
+      document.getElementById('totalVehicles').textContent = vehicles.length;
+      
+      checkServiceAlerts();
+      
+      if (vehicles.length === 0) {
+        list.innerHTML = '<div class="empty">🚗 Noch keine Fahrzeuge in der Garage</div>';
+        return;
+      }
+      
+      const typeLabel = { car: 'Auto', moped: 'Töffli', toeff: 'Töff' };
+      const typeEmoji = { car: '🚗', moped: '🏍️', toeff: '🛵' };
+      
+      list.innerHTML = vehicles.map(v => {
+        let serviceBadge = '';
+        if (v.service) {
+          const parts = v.service.split('.');
+          if (parts.length === 3) {
+            const serviceDate = new Date(parts[2], parts[1]-1, parts[0]);
+            const today = new Date();
+            const diff = (serviceDate - today) / (1000*60*60*24);
+            if (diff <= 30 && diff >= -365) serviceBadge = '<div style="color:#cc0000; font-weight:bold">⚠️ Service fällig!</div>';
+            else if (diff < -365) serviceBadge = '<div style="color:#cc0000">⚠️ Service überfällig!</div>';
+          }
+        }
+        return `
+        <div class="vehicle-card ${v.type}" onclick="openDetail(${v.id})">
+          <span class="type-badge">${typeEmoji[v.type]} ${typeLabel[v.type]}</span>
+          <h3>${v.brand}</h3>
+          <div class="vehicle-info">
+            <div>Kennzeichen: <span>${v.plate || '-'}</span></div>
+            <div>Baujahr: <span>${v.year || '-'}</span></div>
+            <div>Farbe: <span>${v.color || '-'}</span></div>
+            <div>Km-Stand: <span>${v.km ? v.km.toLocaleString() + ' km' : '-'}</span></div>
+            ${v.displacement ? `<div>Hubraum: <span>${v.displacement} ccm</span></div>` : ''}
+            ${v.insurance ? `<div>Versicherung: <span>${v.insurance}</span></div>` : ''}
+            ${v.notes ? `<div>Notizen: <span>${v.notes.substring(0, 30)}${v.notes.length > 30 ? '...' : ''}</span></div>` : ''}
+            ${(v.parts || []).length > 0 ? `<div>🔧 Teile: <span>${v.parts.length}</span></div>` : ''}
+            ${serviceBadge}
+          </div>
+          <button class="delete-btn" onclick="deleteVehicle(${v.id}, event)">Löschen</button>
+        </div>
+      `}).join('');
+    }
+
+    function exportData() {
+      const dataStr = JSON.stringify(vehicles, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'garage_export_' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error('Ungültiges Format');
+          if (confirm('Bestehende Fahrzeuge überschreiben? ("Abbrechen" zum Hinzufügen)')) {
+            vehicles = imported;
+          } else {
+            vehicles = vehicles.concat(imported);
+          }
+          localStorage.setItem('garage_vehicles', JSON.stringify(vehicles));
+          renderVehicles();
+          alert('Import erfolgreich!');
+        } catch(err) {
+          alert('Fehler beim Import: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    renderVehicles();
+  </script>
+</body>
+</html>
